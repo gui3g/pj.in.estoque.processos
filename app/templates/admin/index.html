@@ -1,0 +1,390 @@
+{% extends "base.html" %}
+
+{% block title %}Painel Administrativo - Sistema de Apontamento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+<link rel="stylesheet" href="{{ url_for('static', path='/css/admin.css') }}">
+{% endblock %}
+
+{% block header %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/admin">Sistema de Apontamento</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-boxes me-1"></i>Produtos
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#productModal">Novo Produto</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-products">Listar Produtos</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-tasks me-1"></i>Fases
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#phaseModal">Nova Fase</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-phases">Listar Fases</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-pallet me-1"></i>Lotes
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#batchModal">Novo Lote</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-batches">Listar Lotes</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-users me-1"></i>Usuários
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#userModal">Novo Usuário</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-users">Listar Usuários</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-user me-2"></i>{{ user.name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+        <hr>
+    </div>
+</div>
+
+<!-- Resumo em Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Total de Lotes</h5>
+                        <h2 class="mb-0" id="total-lotes">0</h2>
+                    </div>
+                    <i class="fas fa-pallet fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Em Produção</h5>
+                        <h2 class="mb-0" id="lotes-em-producao">0</h2>
+                    </div>
+                    <i class="fas fa-cogs fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Apontamentos Hoje</h5>
+                        <h2 class="mb-0" id="apontamentos-hoje">0</h2>
+                    </div>
+                    <i class="fas fa-clipboard-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">Em Andamento</h5>
+                        <h2 class="mb-0" id="apontamentos-andamento">0</h2>
+                    </div>
+                    <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- KPIs e Gráficos -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>KPIs de Produção</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Tempo Médio de Produção</div>
+                            <div class="kpi-value"><span id="tempo-medio">0</span> min</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Aderência ao Planejado</div>
+                            <div class="kpi-value"><span id="aderencia">0</span>%</div>
+                        </div>
+                    </div>
+                </div>
+                <h6 class="mt-4">Produtividade por Operador</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Operador</th>
+                                <th>Apontamentos</th>
+                                <th>Tempo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="produtividade-operadores">
+                            <!-- Dados carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Status dos Lotes</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="lotesChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lotes Recentes -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-pallet me-2"></i>Lotes Recentes</h5>
+                <a href="#" id="view-all-lotes" class="btn btn-sm btn-primary">Ver Todos</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Descrição</th>
+                                <th>Status</th>
+                                <th>Produtos</th>
+                                <th>Progresso</th>
+                                <th>Data Criação</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lotes-recentes">
+                            <!-- Dados carregados via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modais para Cadastros -->
+<!-- Modal Produto -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <div class="mb-3">
+                        <label for="product-code" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="product-code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-description" class="form-label">Descrição</label>
+                        <input type="text" class="form-control" id="product-description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-time" class="form-label">Tempo Estimado Total (minutos)</label>
+                        <input type="number" class="form-control" id="product-time" required min="1">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-product">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Fase -->
+<div class="modal fade" id="phaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nova Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="phase-form">
+                    <div class="mb-3">
+                        <label for="phase-code" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="phase-code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phase-description" class="form-label">Descrição</label>
+                        <input type="text" class="form-control" id="phase-description" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-phase">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Lote -->
+<div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Lote</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="batch-form">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="batch-code" class="form-label">Código</label>
+                            <input type="text" class="form-control" id="batch-code" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="batch-description" class="form-label">Descrição</label>
+                            <input type="text" class="form-control" id="batch-description" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="batch-observations" class="form-label">Observações</label>
+                        <textarea class="form-control" id="batch-observations" rows="2"></textarea>
+                    </div>
+                    <hr>
+                    <h6>Produtos</h6>
+                    <div id="batch-products">
+                        <div class="row mb-2 product-item">
+                            <div class="col-md-6">
+                                <select class="form-select product-select">
+                                    <option value="">Selecione um produto</option>
+                                    <!-- Carregado via JavaScript -->
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control product-quantity" placeholder="Quantidade" min="1" value="1">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger remove-product"><i class="fas fa-times"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-2" id="add-product-row">
+                        <i class="fas fa-plus me-1"></i>Adicionar Produto
+                    </button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-batch">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Usuário -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form">
+                    <div class="mb-3">
+                        <label for="user-username" class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" id="user-username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-name" class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="user-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="user-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-password" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="user-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-role" class="form-label">Papel</label>
+                        <select class="form-select" id="user-role" required>
+                            <option value="admin">Administrador</option>
+                            <option value="operador" selected>Operador</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-group" class="form-label">Grupo (Opcional)</label>
+                        <input type="text" class="form-control" id="user-group">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-user">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+{% endblock %}
