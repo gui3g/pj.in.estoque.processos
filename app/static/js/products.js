@@ -30,19 +30,31 @@ $(document).ready(function() {
         deleteProduct(productId);
     });
     
-    // Configurar evento para salvar produto
+    // Salvar produto ao clicar no botão salvar
     $('#save-product').on('click', function() {
         saveProduct();
     });
     
-    // Adicionar evento para o botão de atualizar lista
+    // Atualizar lista de produtos ao clicar no botão atualizar
     $('#refresh-products').on('click', function() {
+        $(this).html('<i class="fas fa-spinner fa-spin me-1"></i>Atualizando...');
+        $(this).prop('disabled', true);
+        
         loadProductsList();
+        
+        // Restaurar botão após um curto período
+        setTimeout(function() {
+            $('#refresh-products').html('<i class="fas fa-sync-alt me-1"></i>Atualizar Lista');
+            $('#refresh-products').prop('disabled', false);
+        }, 1000);
     });
     
-    // Limpar o formulário quando o modal for fechado
+    // Limpar formulário quando o modal for fechado
     $('#productModal').on('hidden.bs.modal', function() {
         $('#product-form')[0].reset();
+        $('#save-product').removeData('mode');
+        $('#save-product').removeData('id');
+        $('.modal-title').text('Novo Produto');
     });
 });
 
@@ -179,9 +191,12 @@ function viewProduct(productId) {
             `;
             
             // Atualizar o conteúdo do modal
-            $('#product-details').html(content);
-            $('#view-product-title').text(`Produto: ${product.codigo}`);
-            $('#viewProductModal').modal('show');
+            $('#product-details-content').html(content);
+            // Atualizar o título do modal
+            $('.modal-title').text(`Detalhes do Produto: ${product.codigo}`);
+            // Exibir o modal
+            const viewModal = new bootstrap.Modal(document.getElementById('viewProductModal'));
+            viewModal.show();
             
             // Carregar fases do produto
             loadProductPhases(productId);
@@ -240,7 +255,7 @@ function loadProductPhases(productId) {
 }
 
 /**
- * Adicionar função para salvar produto
+ * Salvar ou atualizar produto
  */
 function saveProduct() {
     console.log('Salvando produto...');
@@ -267,37 +282,71 @@ function saveProduct() {
         ativo: true
     };
     
-    console.log('Dados do produto a serem enviados:', produtoData);
+    // Verificar se é edição ou criação
+    const isEdit = $('#save-product').data('mode') === 'edit';
+    const productId = $('#save-product').data('id');
+    
+    let url = '/api/products/';
+    let type = 'POST';
+    let successMsg = 'Produto cadastrado com sucesso!';
+    
+    // Se for edição, ajustar URL, método e mensagem
+    if (isEdit && productId) {
+        url = `/api/products/${productId}`;
+        type = 'PUT';
+        successMsg = 'Produto atualizado com sucesso!';
+        console.log(`Atualizando produto ID: ${productId}`);
+    } else {
+        console.log('Criando novo produto');
+    }
+    
+    console.log(`Requisição ${type} para ${url} com dados:`, produtoData);
     
     // Enviar dados para a API
     $.ajax({
-        url: '/api/products/',
-        type: 'POST',
+        url: url,
+        type: type,
         contentType: 'application/json',
         data: JSON.stringify(produtoData),
         xhrFields: {
             withCredentials: true
         },
         success: function(response) {
-            console.log('Produto cadastrado com sucesso:', response);
-            showAlert('success', 'Produto cadastrado com sucesso!');
+            console.log('Operação realizada com sucesso:', response);
+            showAlert('success', successMsg);
             
             // Fechar o modal
             $('#productModal').modal('hide');
             
+            // Resetar o modo do botão de salvar
+            $('#save-product').removeData('mode');
+            $('#save-product').removeData('id');
+            
             // Limpar o formulário
             $('#product-form')[0].reset();
+            $('.modal-title').text('Novo Produto');
             
             // Recarregar a lista de produtos
-            loadProductsList();
+            setTimeout(function() {
+                loadProductsList();
+            }, 500);
         },
         error: function(xhr, status, error) {
-            console.error('Erro ao cadastrar produto:', xhr.status, error);
-            let errorMsg = 'Erro ao cadastrar produto. Tente novamente.';
+            console.error(`Erro ao ${isEdit ? 'atualizar' : 'cadastrar'} produto:`, xhr.status, error);
+            let errorMsg = `Erro ao ${isEdit ? 'atualizar' : 'cadastrar'} produto. Tente novamente.`;
             
             if (xhr.responseJSON) {
                 errorMsg = xhr.responseJSON.detail || errorMsg;
                 console.log('Detalhes do erro:', xhr.responseJSON);
+                
+                // Log detalhado para ajudar no diagnóstico
+                console.log('Dados enviados:', produtoData);
+                console.log('Resposta completa:', xhr);
+                
+                // Verificar se é um problema de código duplicado
+                if (errorMsg.includes('Código de produto já existe')) {
+                    errorMsg = errorMsg + " - Por favor, use um código diferente ou verifique se o produto foi realmente excluído.";
+                }
             }
             
             showAlert('danger', errorMsg);
@@ -366,6 +415,7 @@ function editProduct(productId) {
  */
 function deleteProduct(productId) {
     if (confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+        console.log('Excluindo produto ID:', productId);
         $.ajax({
             url: `/api/products/${productId}`,
             type: 'DELETE',
@@ -373,12 +423,17 @@ function deleteProduct(productId) {
                 withCredentials: true
             },
             success: function() {
+                console.log('Produto excluído com sucesso');
                 showAlert('success', 'Produto excluído com sucesso!');
-                loadProductsList(); // Recarregar a lista
+                
+                // Forçar o recarregamento da lista de produtos
+                setTimeout(function() {
+                    loadProductsList();
+                }, 500);
             },
             error: function(xhr, status, error) {
                 console.error('Erro ao excluir produto:', xhr.status, error);
-                showAlert('danger', 'Erro ao excluir o produto.');
+                showAlert('danger', `Erro ao excluir o produto: ${xhr.responseText || error}`);
             }
         });
     }

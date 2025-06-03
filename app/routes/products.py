@@ -55,13 +55,19 @@ async def create_produto(
             detail="Não autorizado"
         )
     
-    # Verificar se já existe produto com o mesmo código
-    db_produto = db.query(Produto).filter(Produto.codigo == produto.codigo).first()
-    if db_produto:
+    # Verificar se já existe produto ativo com o mesmo código
+    db_produto_ativo = db.query(Produto).filter(Produto.codigo == produto.codigo, Produto.ativo == True).first()
+    if db_produto_ativo:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Código de produto já existe"
+            detail="Código de produto já existe em um produto ativo"
         )
+    
+    # Verificar se existe um produto inativo com o mesmo código (para diagnóstico)
+    db_produto_inativo = db.query(Produto).filter(Produto.codigo == produto.codigo, Produto.ativo == False).first()
+    if db_produto_inativo:
+        print("INFO: Reusando código '{}' de produto inativo ID={}".format(produto.codigo, db_produto_inativo.id))
+        # Não bloqueia, apenas registra para diagnóstico
     
     # Criar novo produto
     db_produto = Produto(**produto.dict())
@@ -90,13 +96,17 @@ async def update_produto(
     if db_produto is None:
         raise HTTPException(status_code=404, detail="Produto não encontrado")
     
-    # Verificar se está tentando atualizar para um código já existente
+    # Verificar se está tentando atualizar para um código já existente em outro produto ativo
     if produto.codigo and produto.codigo != db_produto.codigo:
-        existing_produto = db.query(Produto).filter(Produto.codigo == produto.codigo).first()
+        existing_produto = db.query(Produto).filter(
+            Produto.codigo == produto.codigo,
+            Produto.ativo == True,
+            Produto.id != produto_id  # Ignorar o produto atual
+        ).first()
         if existing_produto:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Código de produto já existe"
+                detail="Código de produto já existe em outro produto ativo"
             )
     
     # Atualizar produto

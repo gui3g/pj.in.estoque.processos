@@ -18,14 +18,10 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
                 </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/produtos">
                         <i class="fas fa-boxes me-1"></i>Produtos
                     </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#productModal">Novo Produto</a></li>
-                        <li><a class="dropdown-item active" href="#" id="list-products">Listar Produtos</a></li>
-                    </ul>
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
@@ -77,9 +73,12 @@
         <div class="col-md-10">
             <h2><i class="fas fa-boxes me-2"></i>Gerenciamento de Produtos</h2>
         </div>
-        <div class="col-md-2 text-end">
+        <div class="text-end mb-3">
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
                 <i class="fas fa-plus me-1"></i>Novo Produto
+            </button>
+            <button class="btn btn-secondary ms-2" id="refresh-products">
+                <i class="fas fa-sync-alt me-1"></i>Atualizar Lista
             </button>
         </div>
     </div>

@@ -69,7 +69,7 @@ async def operator_page(request: Request, current_user=Depends(get_current_user)
     """Renderiza a página da interface do operador."""
     return templates.TemplateResponse("operator/index.html", {"request": request, "user": current_user})
 
-@app.get("/admin/products", response_class=HTMLResponse)
+@app.get("/admin/produtos", response_class=HTMLResponse)
 async def admin_products_page(request: Request, current_user=Depends(get_current_user)):
     """Renderiza a página de gerenciamento de produtos."""
     if current_user["role"] != "admin":

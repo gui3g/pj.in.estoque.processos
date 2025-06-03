@@ -8,7 +8,7 @@ $(document).ready(function() {
     loadLotesRecentes();
     
     // Event listeners para os botões
-    $('#save-product').on('click', saveProduct);
+    // Event listener para o botão #save-product removido - agora gerenciado por products.js
     $('#save-phase').on('click', savePhase);
     $('#save-batch').on('click', saveBatch);
     $('#save-user').on('click', saveUser);
@@ -28,9 +28,6 @@ $(document).ready(function() {
     });
     
     // Handlers para visualização de listas
-    $('#list-products').on('click', function() {
-        window.location.href = '/admin/products';
-    });
     
     $('#list-phases').on('click', function() {
         alert('Funcionalidade em desenvolvimento: Listar Fases');
@@ -215,57 +212,7 @@ function addProductRow() {
     $('#batch-products').append(productRow);
 }
 
-/**
- * Salva um novo produto
- */
-function saveProduct() {
-    const codigo = $('#product-codigo').val();
-    const descricao = $('#product-descricao').val() || "";
-    const tempoEstimado = $('#product-tempo').val() || 0;
-    
-    // Verificar campos obrigatórios
-    if (!codigo) {
-        alert('Preencha o código do produto.');
-        return;
-    }
-    
-    // Dados a serem enviados conforme o modelo do banco de dados
-    const produtoData = {
-        codigo: codigo,
-        descricao: descricao,
-        tempo_estimado_total: parseInt(tempoEstimado) || 0
-    };
-    
-    console.log('Enviando dados do produto:', produtoData);
-    
-    $.ajax({
-        url: '/api/products/',
-        type: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify(produtoData),
-        success: function(response) {
-            console.log('Produto cadastrado com sucesso:', response);
-            alert('Produto cadastrado com sucesso!');
-            $('#productModal').modal('hide');
-            $('#product-form')[0].reset();
-            // Recarregar a lista de produtos se estivermos na página de produtos
-            if (typeof loadProductsList === 'function') {
-                loadProductsList();
-            }
-        },
-        error: function(xhr) {
-            console.error('Erro ao cadastrar produto:', xhr);
-            let errorMsg = 'Erro ao cadastrar produto. Tente novamente.';
-            
-            if (xhr.responseJSON) {
-                errorMsg = xhr.responseJSON.detail || errorMsg;
-                console.log('Detalhes do erro:', xhr.responseJSON);
-            }
-            
-            alert(errorMsg);
-        }
-    });
-}
+// Função saveProduct removida - agora centralizada em products.js
 
 /**
  * Salva uma nova fase
