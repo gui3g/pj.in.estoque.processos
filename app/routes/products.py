@@ -63,11 +63,13 @@ async def create_produto(
             detail="Código de produto já existe em um produto ativo"
         )
     
-    # Verificar se existe um produto inativo com o mesmo código (para diagnóstico)
+    # Verificar se existe um produto inativo com o mesmo código
     db_produto_inativo = db.query(Produto).filter(Produto.codigo == produto.codigo, Produto.ativo == False).first()
     if db_produto_inativo:
-        print("INFO: Reusando código '{}' de produto inativo ID={}".format(produto.codigo, db_produto_inativo.id))
-        # Não bloqueia, apenas registra para diagnóstico
+        print("INFO: Encontrado produto inativo com o código '{}' (ID={}). Removendo-o antes de criar o novo.".format(produto.codigo, db_produto_inativo.id))
+        # Excluir fisicamente o produto inativo do banco de dados para permitir a reutilização do código
+        db.delete(db_produto_inativo)
+        db.commit()
     
     # Criar novo produto
     db_produto = Produto(**produto.dict())
