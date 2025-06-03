@@ -17,8 +17,16 @@ async def get_produtos(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Retorna a lista de produtos ativos."""
+    """Retorna a lista de produtos ativos com o número de fases."""
+    # Consulta produtos ativos
     produtos = db.query(Produto).filter(Produto.ativo == True).offset(skip).limit(limit).all()
+    
+    # Adicionar informação sobre o número de fases para cada produto
+    for produto in produtos:
+        # Consultar quantas fases o produto tem
+        num_fases = db.query(ProdutoFase).filter(ProdutoFase.produto_id == produto.id).count()
+        setattr(produto, 'num_fases', num_fases)
+        
     return produtos
 
 @router.get("/{produto_id}", response_model=ProdutoSchema)

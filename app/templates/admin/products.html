@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Produtos - Sistema de Apontamento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/admin.css') }}">
+{% endblock %}
+
+{% block header %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/admin">Sistema de Apontamento</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle active" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-boxes me-1"></i>Produtos
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#productModal">Novo Produto</a></li>
+                        <li><a class="dropdown-item active" href="#" id="list-products">Listar Produtos</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-tasks me-1"></i>Fases
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#phaseModal">Nova Fase</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-phases">Listar Fases</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-pallet me-1"></i>Lotes
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#batchModal">Novo Lote</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-batches">Listar Lotes</a></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-users me-1"></i>Usuários
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#userModal">Novo Usuário</a></li>
+                        <li><a class="dropdown-item" href="#" id="list-users">Listar Usuários</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-user me-2"></i>{{ user.name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-10">
+            <h2><i class="fas fa-boxes me-2"></i>Gerenciamento de Produtos</h2>
+        </div>
+        <div class="col-md-2 text-end">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
+                <i class="fas fa-plus me-1"></i>Novo Produto
+            </button>
+        </div>
+    </div>
+    <hr>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="mb-0">Lista de Produtos</h5>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" id="search-products" class="form-control" placeholder="Buscar produtos...">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Unidade</th>
+                            <th>Nº de Fases</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="products-table-body">
+                        <!-- Linhas de produtos serão inseridas via JavaScript -->
+                        <tr>
+                            <td colspan="6" class="text-center">Carregando produtos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Produto -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="product-form">
+                    <div class="mb-3">
+                        <label for="product-codigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="product-codigo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="product-nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="product-descricao" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-unidade" class="form-label">Unidade</label>
+                        <select class="form-select" id="product-unidade" required>
+                            <option value="und">Unidade (UND)</option>
+                            <option value="kg">Kilograma (KG)</option>
+                            <option value="g">Grama (G)</option>
+                            <option value="l">Litro (L)</option>
+                            <option value="ml">Mililitro (ML)</option>
+                            <option value="m">Metro (M)</option>
+                            <option value="cm">Centímetro (CM)</option>
+                            <option value="m2">Metro Quadrado (M²)</option>
+                            <option value="m3">Metro Cúbico (M³)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="product-tempo" class="form-label">Tempo Estimado (minutos)</label>
+                        <input type="number" class="form-control" id="product-tempo" min="0" value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-product">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalhes do produto -->
+<div class="modal fade" id="viewProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Produto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="product-details-content">
+                <!-- Conteúdo carregado via JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+<script src="{{ url_for('static', path='/js/products.js') }}"></script>
+{% endblock %}

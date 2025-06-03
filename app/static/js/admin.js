@@ -29,7 +29,7 @@ $(document).ready(function() {
     
     // Handlers para visualização de listas
     $('#list-products').on('click', function() {
-        alert('Funcionalidade em desenvolvimento: Listar Produtos');
+        window.location.href = '/admin/products';
     });
     
     $('#list-phases').on('click', function() {
@@ -219,33 +219,52 @@ function addProductRow() {
  * Salva um novo produto
  */
 function saveProduct() {
-    const codigo = $('#product-code').val();
-    const descricao = $('#product-description').val();
-    const tempoEstimado = $('#product-time').val();
+    const codigo = $('#product-codigo').val();
+    const nome = $('#product-nome').val();
+    const descricao = $('#product-descricao').val();
+    const unidade = $('#product-unidade').val();
+    const tempoEstimado = $('#product-tempo').val() || 0;
     
-    if (!codigo || !descricao || !tempoEstimado) {
-        alert('Preencha todos os campos obrigatórios.');
+    // Verificar todos os campos obrigatórios
+    if (!codigo || !nome || !unidade) {
+        alert('Preencha todos os campos obrigatórios: Código, Nome e Unidade.');
         return;
     }
+    
+    // Dados a serem enviados
+    const produtoData = {
+        codigo: codigo,
+        nome: nome,
+        descricao: descricao || "",
+        unidade: unidade,
+        tempo_estimado_total: parseInt(tempoEstimado)
+    };
+    
+    console.log('Enviando dados do produto:', produtoData);
     
     $.ajax({
         url: '/api/products/',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            codigo: codigo,
-            descricao: descricao,
-            tempo_estimado_total: parseInt(tempoEstimado)
-        }),
+        data: JSON.stringify(produtoData),
         success: function() {
             alert('Produto cadastrado com sucesso!');
             $('#productModal').modal('hide');
             $('#product-form')[0].reset();
+            // Recarregar a lista de produtos se estivermos na página de produtos
+            if (typeof loadProductsList === 'function') {
+                loadProductsList();
+            }
         },
         error: function(xhr) {
-            const errorMsg = xhr.responseJSON && xhr.responseJSON.detail 
-                ? xhr.responseJSON.detail 
-                : 'Erro ao cadastrar produto. Tente novamente.';
+            console.error('Erro ao cadastrar produto:', xhr);
+            let errorMsg = 'Erro ao cadastrar produto. Tente novamente.';
+            
+            if (xhr.responseJSON) {
+                errorMsg = xhr.responseJSON.detail || errorMsg;
+                console.log('Detalhes do erro:', xhr.responseJSON);
+            }
+            
             alert(errorMsg);
         }
     });

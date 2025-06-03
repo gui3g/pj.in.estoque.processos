@@ -44,8 +44,10 @@ class Usuario(UsuarioBase):
 # Schemas para produtos
 class ProdutoBase(BaseModel):
     codigo: str
+    nome: str
     descricao: str
     tempo_estimado_total: int
+    unidade: str
     ativo: bool = True
 
 class ProdutoCreate(ProdutoBase):
@@ -53,12 +55,15 @@ class ProdutoCreate(ProdutoBase):
 
 class ProdutoUpdate(BaseModel):
     codigo: Optional[str] = None
+    nome: Optional[str] = None
     descricao: Optional[str] = None
     tempo_estimado_total: Optional[int] = None
+    unidade: Optional[str] = None
     ativo: Optional[bool] = None
 
 class Produto(ProdutoBase):
     id: int
+    num_fases: Optional[int] = None
 
     class Config:
         orm_mode = True
