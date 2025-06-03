@@ -220,24 +220,20 @@ function addProductRow() {
  */
 function saveProduct() {
     const codigo = $('#product-codigo').val();
-    const nome = $('#product-nome').val();
-    const descricao = $('#product-descricao').val();
-    const unidade = $('#product-unidade').val();
+    const descricao = $('#product-descricao').val() || "";
     const tempoEstimado = $('#product-tempo').val() || 0;
     
-    // Verificar todos os campos obrigatórios
-    if (!codigo || !nome || !unidade) {
-        alert('Preencha todos os campos obrigatórios: Código, Nome e Unidade.');
+    // Verificar campos obrigatórios
+    if (!codigo) {
+        alert('Preencha o código do produto.');
         return;
     }
     
-    // Dados a serem enviados
+    // Dados a serem enviados conforme o modelo do banco de dados
     const produtoData = {
         codigo: codigo,
-        nome: nome,
-        descricao: descricao || "",
-        unidade: unidade,
-        tempo_estimado_total: parseInt(tempoEstimado)
+        descricao: descricao,
+        tempo_estimado_total: parseInt(tempoEstimado) || 0
     };
     
     console.log('Enviando dados do produto:', produtoData);
@@ -247,7 +243,8 @@ function saveProduct() {
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(produtoData),
-        success: function() {
+        success: function(response) {
+            console.log('Produto cadastrado com sucesso:', response);
             alert('Produto cadastrado com sucesso!');
             $('#productModal').modal('hide');
             $('#product-form')[0].reset();

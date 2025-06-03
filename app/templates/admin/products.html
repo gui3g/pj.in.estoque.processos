@@ -136,30 +136,20 @@
                         <input type="text" class="form-control" id="product-codigo" required>
                     </div>
                     <div class="mb-3">
-                        <label for="product-nome" class="form-label">Nome</label>
-                        <input type="text" class="form-control" id="product-nome" required>
-                    </div>
-                    <div class="mb-3">
                         <label for="product-descricao" class="form-label">Descrição</label>
                         <textarea class="form-control" id="product-descricao" rows="3"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="product-unidade" class="form-label">Unidade</label>
-                        <select class="form-select" id="product-unidade" required>
-                            <option value="und">Unidade (UND)</option>
-                            <option value="kg">Kilograma (KG)</option>
-                            <option value="g">Grama (G)</option>
-                            <option value="l">Litro (L)</option>
-                            <option value="ml">Mililitro (ML)</option>
-                            <option value="m">Metro (M)</option>
-                            <option value="cm">Centímetro (CM)</option>
-                            <option value="m2">Metro Quadrado (M²)</option>
-                            <option value="m3">Metro Cúbico (M³)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="product-tempo" class="form-label">Tempo Estimado (minutos)</label>
-                        <input type="number" class="form-control" id="product-tempo" min="0" value="0">
+                        <label for="product-tempo" class="form-label">Tempo Estimado</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="product-tempo" min="0" value="0">
+                            <select class="form-select" id="product-tempo-unidade">
+                                <option value="1" selected>Minutos</option>
+                                <option value="60">Horas</option>
+                                <option value="1440">Dias</option>
+                            </select>
+                        </div>
+                        <small class="form-text text-muted">O tempo será convertido para minutos no sistema</small>
                     </div>
                 </form>
             </div>

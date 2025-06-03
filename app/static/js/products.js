@@ -35,6 +35,11 @@ $(document).ready(function() {
         saveProduct();
     });
     
+    // Adicionar evento para o botão de atualizar lista
+    $('#refresh-products').on('click', function() {
+        loadProductsList();
+    });
+    
     // Limpar o formulário quando o modal for fechado
     $('#productModal').on('hidden.bs.modal', function() {
         $('#product-form')[0].reset();
@@ -45,16 +50,25 @@ $(document).ready(function() {
  * Carrega a lista de produtos
  */
 function loadProductsList() {
+    console.log('Iniciando carregamento da lista de produtos...');
     $.ajax({
-        url: '/api/products',
+        url: '/api/products/',
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        headers: {
+            'Accept': 'application/json'
+        },
         success: function(products) {
+            console.log('Produtos carregados com sucesso:', products);
             renderProductsTable(products);
         },
-        error: function(xhr) {
-            console.error('Erro ao carregar produtos:', xhr);
+        error: function(xhr, status, error) {
+            console.error('Erro ao carregar produtos:', xhr.status, error);
+            console.error('Resposta:', xhr.responseText);
             showAlert('danger', 'Erro ao carregar a lista de produtos.');
-            $('#products-table-body').html('<tr><td colspan="6" class="text-center">Erro ao carregar produtos</td></tr>');
+            $('#products-table-body').html(`<tr><td colspan="6" class="text-center">Erro ao carregar produtos: ${xhr.status} ${error}</td></tr>`);
         }
     });
 }
@@ -66,14 +80,17 @@ function renderProductsTable(products) {
     const tbody = $('#products-table-body');
     tbody.empty();
     
+    console.log('Produtos recebidos para renderização:', products);
+    
     if (products && products.length > 0) {
         products.forEach(function(product) {
+            // Use apenas os campos que existem no modelo atual
             const row = `
                 <tr data-product-id="${product.id}">
                     <td>${product.codigo}</td>
-                    <td>${product.nome}</td>
+                    <td>${product.codigo}</td> <!-- Usamos o código no lugar do nome -->
                     <td>${product.descricao || '-'}</td>
-                    <td>${product.unidade.toUpperCase()}</td>
+                    <td>UND</td> <!-- Valor padrão já que o campo não existe -->
                     <td>${product.num_fases || 0}</td>
                     <td>
                         <div class="btn-group btn-group-sm" role="group">
@@ -119,18 +136,25 @@ function filterProducts(searchTerm) {
  * Visualiza os detalhes de um produto
  */
 function viewProduct(productId) {
+    console.log('Visualizando produto ID:', productId);
     $.ajax({
         url: `/api/products/${productId}`,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        headers: {
+            'Accept': 'application/json'
+        },
         success: function(product) {
+            console.log('Detalhes do produto carregados:', product);
             // Preencher o modal com os detalhes do produto
             const content = `
                 <div class="row">
                     <div class="col-md-6">
                         <p><strong>Código:</strong> ${product.codigo}</p>
-                        <p><strong>Nome:</strong> ${product.nome}</p>
                         <p><strong>Descrição:</strong> ${product.descricao || '-'}</p>
-                        <p><strong>Unidade:</strong> ${product.unidade.toUpperCase()}</p>
+                        <p><strong>Tempo Estimado:</strong> ${product.tempo_estimado_total} minutos</p>
                     </div>
                 </div>
                 
@@ -142,27 +166,28 @@ function viewProduct(productId) {
                                 <th>Ordem</th>
                                 <th>Fase</th>
                                 <th>Tempo Estimado</th>
-                                <th>Tempo Prateleira</th>
+                                <th>Tempo de Prateleira</th>
                             </tr>
                         </thead>
                         <tbody id="product-phases">
-                            <tr><td colspan="4" class="text-center">Carregando fases...</td></tr>
+                            <tr>
+                                <td colspan="4" class="text-center">Carregando fases...</td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
             `;
             
-            $('#product-details-content').html(content);
-            
-            // Exibir modal
-            const viewModal = new bootstrap.Modal(document.getElementById('viewProductModal'));
-            viewModal.show();
+            // Atualizar o conteúdo do modal
+            $('#product-details').html(content);
+            $('#view-product-title').text(`Produto: ${product.codigo}`);
+            $('#viewProductModal').modal('show');
             
             // Carregar fases do produto
             loadProductPhases(productId);
         },
-        error: function(xhr) {
-            console.error('Erro ao carregar detalhes do produto:', xhr);
+        error: function(xhr, status, error) {
+            console.error('Erro ao carregar detalhes do produto:', xhr.status, error);
             showAlert('danger', 'Erro ao carregar detalhes do produto.');
         }
     });
@@ -175,6 +200,12 @@ function loadProductPhases(productId) {
     $.ajax({
         url: `/api/products/${productId}/fases`,
         type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        headers: {
+            'Accept': 'application/json'
+        },
         success: function(phases) {
             const tbody = $('#product-phases');
             tbody.empty();
@@ -201,11 +232,156 @@ function loadProductPhases(productId) {
                 tbody.append('<tr><td colspan="4" class="text-center">Nenhuma fase encontrada</td></tr>');
             }
         },
-        error: function(xhr) {
-            console.error('Erro ao carregar fases do produto:', xhr);
+        error: function(xhr, status, error) {
+            console.error('Erro ao carregar fases do produto:', xhr.status, error);
             $('#product-phases').html('<tr><td colspan="4" class="text-center">Erro ao carregar fases</td></tr>');
         }
     });
+}
+
+/**
+ * Adicionar função para salvar produto
+ */
+function saveProduct() {
+    console.log('Salvando produto...');
+    
+    const codigo = $('#product-codigo').val();
+    const descricao = $('#product-descricao').val() || "";
+    const tempoEstimadoValor = parseInt($('#product-tempo').val() || 0);
+    const unidadeTempo = parseInt($('#product-tempo-unidade').val() || 1);
+    
+    // Calcular o tempo total em minutos baseado na unidade selecionada
+    const tempoEstimadoTotal = tempoEstimadoValor * unidadeTempo;
+    
+    // Verificar campos obrigatórios
+    if (!codigo) {
+        showAlert('warning', 'Preencha o código do produto.');
+        return;
+    }
+    
+    // Dados a serem enviados conforme o modelo do banco de dados
+    const produtoData = {
+        codigo: codigo,
+        descricao: descricao,
+        tempo_estimado_total: tempoEstimadoTotal,
+        ativo: true
+    };
+    
+    console.log('Dados do produto a serem enviados:', produtoData);
+    
+    // Enviar dados para a API
+    $.ajax({
+        url: '/api/products/',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(produtoData),
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(response) {
+            console.log('Produto cadastrado com sucesso:', response);
+            showAlert('success', 'Produto cadastrado com sucesso!');
+            
+            // Fechar o modal
+            $('#productModal').modal('hide');
+            
+            // Limpar o formulário
+            $('#product-form')[0].reset();
+            
+            // Recarregar a lista de produtos
+            loadProductsList();
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao cadastrar produto:', xhr.status, error);
+            let errorMsg = 'Erro ao cadastrar produto. Tente novamente.';
+            
+            if (xhr.responseJSON) {
+                errorMsg = xhr.responseJSON.detail || errorMsg;
+                console.log('Detalhes do erro:', xhr.responseJSON);
+            }
+            
+            showAlert('danger', errorMsg);
+        }
+    });
+}
+
+/**
+ * Editar um produto
+ */
+function editProduct(productId) {
+    console.log('Editando produto ID:', productId);
+    
+    // Primeiro buscar os dados do produto
+    $.ajax({
+        url: `/api/products/${productId}`,
+        type: 'GET',
+        xhrFields: {
+            withCredentials: true
+        },
+        headers: {
+            'Accept': 'application/json'
+        },
+        success: function(product) {
+            console.log('Dados do produto para edição:', product);
+            
+            // Preencher formulário com os dados atuais
+            $('#product-codigo').val(product.codigo);
+            $('#product-descricao').val(product.descricao || '');
+            
+            // Calcular valores para a unidade de tempo selecionada
+            let tempoEstimado = product.tempo_estimado_total || 0;
+            let unidadeTempo = 1; // Padrão: minutos
+            
+            // Se o tempo for divisível por 1440 (dias), usar essa unidade
+            if (tempoEstimado >= 1440 && tempoEstimado % 1440 === 0) {
+                tempoEstimado = tempoEstimado / 1440;
+                unidadeTempo = 1440;
+            }
+            // Senão, se for divisível por 60 (horas), usar essa unidade
+            else if (tempoEstimado >= 60 && tempoEstimado % 60 === 0) {
+                tempoEstimado = tempoEstimado / 60;
+                unidadeTempo = 60;
+            }
+            
+            $('#product-tempo').val(tempoEstimado);
+            $('#product-tempo-unidade').val(unidadeTempo);
+            
+            // Configurar modal para modo de edição
+            $('.modal-title').text('Editar Produto');
+            $('#save-product').data('mode', 'edit');
+            $('#save-product').data('id', productId);
+            
+            // Exibir modal
+            $('#productModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+            console.error('Erro ao carregar dados do produto para edição:', xhr.status, error);
+            showAlert('danger', 'Não foi possível carregar os dados do produto para edição.');
+        }
+    });
+}
+
+/**
+ * Excluir um produto
+ */
+function deleteProduct(productId) {
+    if (confirm('Tem certeza que deseja excluir este produto? Esta ação não pode ser desfeita.')) {
+        $.ajax({
+            url: `/api/products/${productId}`,
+            type: 'DELETE',
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function() {
+                showAlert('success', 'Produto excluído com sucesso!');
+                loadProductsList(); // Recarregar a lista
+            },
+            error: function(xhr, status, error) {
+                console.error('Erro ao excluir produto:', xhr.status, error);
+                showAlert('danger', 'Erro ao excluir o produto.');
+            }
+        });
+    }
 }
 
 /**
@@ -219,13 +395,15 @@ function showAlert(type, message) {
         </div>
     `;
     
-    // Remover alertas existentes
-    $('.alert').remove();
+    const alertsContainer = $('#alerts-container');
+    if (alertsContainer.length === 0) {
+        // Criar container se não existir
+        $('.container').first().prepend('<div id="alerts-container"></div>');
+    }
     
-    // Adicionar novo alerta
-    $('.container').prepend(alertHtml);
+    $('#alerts-container').append(alertHtml);
     
-    // Auto-fechar após 5 segundos
+    // Auto-esconder após 5 segundos
     setTimeout(function() {
         $('.alert').alert('close');
     }, 5000);

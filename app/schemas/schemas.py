@@ -44,10 +44,8 @@ class Usuario(UsuarioBase):
 # Schemas para produtos
 class ProdutoBase(BaseModel):
     codigo: str
-    nome: str
     descricao: str
     tempo_estimado_total: int
-    unidade: str
     ativo: bool = True
 
 class ProdutoCreate(ProdutoBase):
