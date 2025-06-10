@@ -1,38 +1,40 @@
+# Todas as regras estão comentadas para incluir todos os arquivos no Git
+
 # Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# __pycache__/
+# *.py[cod]
+# *$py.class
 
 # C extensions
-*.so
+# *.so
 
 # Distribution / packaging
-dist/
-build/
-*.egg-info/
+# dist/
+# build/
+# *.egg-info/
 
 # Virtual environments
-venv/
-env/
-ENV/
+# venv/
+# env/
+# ENV/
 
 # Environment variables
-.env.local
-.env.development
-.env.test
-.env.production
+# .env.local
+# .env.development
+# .env.test
+# .env.production
 
 # IDE files
-.idea/
-.vscode/
-*.swp
-*.swo
+# .idea/
+# .vscode/
+# *.swp
+# *.swo
 
 # Logs
-*.log
+# *.log
 
 # Large binaries
-sistema-apontamento.tar
+# sistema-apontamento.tar
 
 # Database
 # Não ignorar arquivos de banco de dados para que sejam incluídos no git
@@ -40,7 +42,7 @@ sistema-apontamento.tar
 # *.sqlite3
 
 # Alembic
-migrations/versions/
+# migrations/versions/
 
 # OS generated files
-.DS_Store
+# .DS_Store
