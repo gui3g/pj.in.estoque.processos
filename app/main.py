@@ -79,5 +79,35 @@ async def admin_products_page(request: Request, current_user=Depends(get_current
         )
     return templates.TemplateResponse("admin/products.html", {"request": request, "user": current_user})
 
+@app.get("/admin/fases", response_class=HTMLResponse)
+async def admin_phases_page(request: Request, current_user=Depends(get_current_user)):
+    """Renderiza a página de gerenciamento de fases."""
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas administradores podem acessar esta página."
+        )
+    return templates.TemplateResponse("admin/phases.html", {"request": request, "user": current_user})
+
+@app.get("/admin/lotes", response_class=HTMLResponse)
+async def admin_batches_page(request: Request, current_user=Depends(get_current_user)):
+    """Renderiza a página de gerenciamento de lotes."""
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas administradores podem acessar esta página."
+        )
+    return templates.TemplateResponse("admin/batches.html", {"request": request, "user": current_user})
+
+@app.get("/admin/usuarios", response_class=HTMLResponse)
+async def admin_users_page(request: Request, current_user=Depends(get_current_user)):
+    """Renderiza a página de gerenciamento de usuários."""
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas administradores podem acessar esta página."
+        )
+    return templates.TemplateResponse("admin/users.html", {"request": request, "user": current_user})
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

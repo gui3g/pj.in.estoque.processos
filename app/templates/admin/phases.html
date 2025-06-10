@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Gerenciamento de Produtos - Sistema de Apontamento{% endblock %}
+{% block title %}Gerenciamento de Fases - Sistema de Apontamento{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', path='/css/admin.css') }}">
@@ -19,12 +19,12 @@
                     <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="/admin/produtos">
+                    <a class="nav-link" href="/admin/produtos">
                         <i class="fas fa-boxes me-1"></i>Produtos
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/fases">
+                    <a class="nav-link active" href="/admin/fases">
                         <i class="fas fa-tasks me-1"></i>Fases
                     </a>
                 </li>
@@ -59,13 +59,13 @@
 <div class="container mt-4">
     <div class="row mb-4">
         <div class="col-md-10">
-            <h2><i class="fas fa-boxes me-2"></i>Gerenciamento de Produtos</h2>
+            <h2><i class="fas fa-tasks me-2"></i>Gerenciamento de Fases</h2>
         </div>
         <div class="text-end mb-3">
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#productModal">
-                <i class="fas fa-plus me-1"></i>Novo Produto
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#phaseModal">
+                <i class="fas fa-plus me-1"></i>Nova Fase
             </button>
-            <button class="btn btn-secondary ms-2" id="refresh-products">
+            <button class="btn btn-secondary ms-2" id="refresh-phases">
                 <i class="fas fa-sync-alt me-1"></i>Atualizar Lista
             </button>
         </div>
@@ -76,10 +76,10 @@
         <div class="card-header">
             <div class="row">
                 <div class="col-md-8">
-                    <h5 class="mb-0">Lista de Produtos</h5>
+                    <h5 class="mb-0">Lista de Fases</h5>
                 </div>
                 <div class="col-md-4">
-                    <input type="text" id="search-products" class="form-control" placeholder="Buscar produtos...">
+                    <input type="text" class="form-control" id="phase-search" placeholder="Buscar fases...">
                 </div>
             </div>
         </div>
@@ -91,15 +91,15 @@
                             <th>Código</th>
                             <th>Nome</th>
                             <th>Descrição</th>
-                            <th>Unidade</th>
-                            <th>Nº de Fases</th>
+                            <th>Tempo Estimado</th>
+                            <th>Itens Checklist</th>
                             <th>Ações</th>
                         </tr>
                     </thead>
-                    <tbody id="products-table-body">
-                        <!-- Linhas de produtos serão inseridas via JavaScript -->
+                    <tbody id="phases-table-body">
+                        <!-- Linhas de fases serão inseridas via JavaScript -->
                         <tr>
-                            <td colspan="6" class="text-center">Carregando produtos...</td>
+                            <td colspan="6" class="text-center">Carregando fases...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -108,29 +108,33 @@
     </div>
 </div>
 
-<!-- Modal de Produto -->
-<div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+<!-- Modal de Fase -->
+<div class="modal fade" id="phaseModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Novo Produto</h5>
+                <h5 class="modal-title">Nova Fase</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="product-form">
+                <form id="phase-form">
                     <div class="mb-3">
-                        <label for="product-codigo" class="form-label">Código</label>
-                        <input type="text" class="form-control" id="product-codigo" required>
+                        <label for="phase-codigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="phase-codigo" required>
                     </div>
                     <div class="mb-3">
-                        <label for="product-descricao" class="form-label">Descrição</label>
-                        <textarea class="form-control" id="product-descricao" rows="3"></textarea>
+                        <label for="phase-nome" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="phase-nome" required>
                     </div>
                     <div class="mb-3">
-                        <label for="product-tempo" class="form-label">Tempo Estimado</label>
+                        <label for="phase-descricao" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="phase-descricao" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="phase-tempo" class="form-label">Tempo Estimado</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="product-tempo" min="0" value="0">
-                            <select class="form-select" id="product-tempo-unidade">
+                            <input type="number" class="form-control" id="phase-tempo" min="0" value="0">
+                            <select class="form-select" id="phase-tempo-unidade">
                                 <option value="1" selected>Minutos</option>
                                 <option value="60">Horas</option>
                                 <option value="1440">Dias</option>
@@ -138,25 +142,31 @@
                         </div>
                         <small class="form-text text-muted">O tempo será convertido para minutos no sistema</small>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="phase-requer-aprovacao">
+                            <label class="form-check-label" for="phase-requer-aprovacao">Requer aprovação</label>
+                        </div>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary" id="save-product">Salvar</button>
+                <button type="button" class="btn btn-primary" id="save-phase">Salvar</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal para detalhes do produto -->
-<div class="modal fade" id="viewProductModal" tabindex="-1" aria-hidden="true">
+<!-- Modal para detalhes da fase -->
+<div class="modal fade" id="viewPhaseModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Detalhes do Produto</h5>
+                <h5 class="modal-title">Detalhes da Fase</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="product-details-content">
+            <div class="modal-body" id="phase-details-content">
                 <!-- Conteúdo carregado via JavaScript -->
             </div>
             <div class="modal-footer">
@@ -165,9 +175,45 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para checklist da fase -->
+<div class="modal fade" id="phaseChecklistModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Checklist da Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="checklist-item" class="form-label">Novo Item</label>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="checklist-item" placeholder="Descrição do item">
+                        <div class="form-check form-check-inline ms-2 mt-2">
+                            <input class="form-check-input" type="checkbox" id="checklist-item-required">
+                            <label class="form-check-label" for="checklist-item-required">Obrigatório</label>
+                        </div>
+                        <button class="btn btn-outline-secondary" type="button" id="add-checklist-item">Adicionar</button>
+                    </div>
+                </div>
+                <div class="checklist-items-container">
+                    <h6>Itens do Checklist</h6>
+                    <ul id="checklist-items" class="list-group">
+                        <!-- Itens serão adicionados dinamicamente -->
+                        <li class="list-group-item text-center">Nenhum item adicionado</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="save-checklist">Salvar Checklist</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', path='/js/admin.js') }}"></script>
-<script src="{{ url_for('static', path='/js/products.js') }}"></script>
+<script src="{{ url_for('static', path='/js/phases.js') }}"></script>
 {% endblock %}
