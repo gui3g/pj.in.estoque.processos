@@ -149,8 +149,16 @@ function onLoteSelected() {
     
     if (!loteId) {
         $('#produto-container').hide();
+        $('#fase-container').hide();
+        $('#apontamento-container').hide();
+        $('#next-steps-container').hide();
+        $('#no-lote-selected').show();
         return;
     }
+    
+    // Carregar os próximos passos para este lote
+    loadNextSteps(loteId);
+    $('#no-lote-selected').hide();
     
     // Carregar produtos do lote
     $.ajax({
@@ -255,7 +263,7 @@ function onFaseSelected() {
     
     // Verificar se já existe um apontamento em andamento para esta combinação
     $.ajax({
-        url: `/api/appointments/?lote_id=${loteId}&produto_id=${produtoId}&fase_id=${faseId}&status=iniciado`,
+        url: `/api/apontamentos/?lote_id=${loteId}&produto_id=${produtoId}&fase_id=${faseId}&status=iniciado`,
         type: 'GET',
         success: function(apontamentos) {
             // Preparar interface de apontamento
@@ -329,7 +337,7 @@ function loadChecklist(apontamentoId, faseId) {
             
             // Depois, carregar as respostas existentes para o apontamento
             $.ajax({
-                url: `/api/appointments/${apontamentoId}/checklist`,
+                url: `/api/apontamentos/${apontamentoId}/checklist`,
                 type: 'GET',
                 success: function(respostas) {
                     const checklistContainer = $('#checklist-items');
@@ -408,7 +416,7 @@ function loadChecklist(apontamentoId, faseId) {
  */
 function salvarRespostaChecklist(apontamentoId, itemId, concluido, observacao) {
     $.ajax({
-        url: `/api/appointments/${apontamentoId}/checklist`,
+        url: `/api/apontamentos/${apontamentoId}/checklist`,
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
@@ -501,7 +509,7 @@ function finalizarApontamento() {
     const observacoes = $('#observacoes').val();
     
     $.ajax({
-        url: `/api/appointments/${apontamentoAtual.id}`,
+        url: `/api/apontamentos/${apontamentoAtual.id}`,
         type: 'PUT',
         contentType: 'application/json',
         data: JSON.stringify({
@@ -632,7 +640,7 @@ function loadHistoricoApontamentos() {
 // Funções para iniciar e finalizar apontamentos
 function startAppointment(phaseId) {
     $.ajax({
-        url: '/api/appointments/start',
+        url: '/api/apontamentos/start',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({
@@ -689,7 +697,7 @@ function completeAppointment(checklistData = null) {
     }
     
     $.ajax({
-        url: '/api/appointments/finish',
+        url: '/api/apontamentos/finish',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(data),
@@ -726,7 +734,7 @@ function completeAppointment(checklistData = null) {
 function showChecklistModal(appointmentId) {
     // Buscar itens do checklist para esta fase
     $.ajax({
-        url: `/api/appointments/${appointmentId}/checklist`,
+        url: `/api/apontamentos/${appointmentId}/checklist`,
         type: 'GET',
         success: function(items) {
             // Criar conteúdo do modal
@@ -823,7 +831,7 @@ function showChecklistModal(appointmentId) {
 function initTimer() {
     // Verificar se há algum apontamento em andamento
     $.ajax({
-        url: '/api/appointments/active',
+        url: '/api/apontamentos/active',
         type: 'GET',
         success: function(data) {
             if (data && data.id) {

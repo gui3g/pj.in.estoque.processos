@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Máquinas - Sistema de Apontamento{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', path='/css/admin.css') }}">
+{% endblock %}
+
+{% block header %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/admin">Sistema de Apontamento</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/fases">
+                        <i class="fas fa-tasks me-1"></i>Fases
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/produtos">
+                        <i class="fas fa-boxes me-1"></i>Produtos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/lotes">
+                        <i class="fas fa-pallet me-1"></i>Lotes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/usuarios">
+                        <i class="fas fa-users me-1"></i>Usuários
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/maquinas">
+                        <i class="fas fa-cogs me-1"></i>Máquinas
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-user me-2"></i>{{ user.name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Gerenciamento de Máquinas</h5>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMachineModal">
+                <i class="fas fa-plus-circle me-1"></i> Nova Máquina
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    <input type="text" id="search-machine" class="form-control" placeholder="Buscar máquinas...">
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="machines-table">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Nome</th>
+                            <th>Fase</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Preenchido via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="no-machines-message" class="text-center p-3" style="display: none;">
+                <p class="text-muted">Nenhuma máquina cadastrada.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Adicionar Máquina -->
+<div class="modal fade" id="addMachineModal" tabindex="-1" aria-labelledby="addMachineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMachineModalLabel">Nova Máquina</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMachineForm">
+                    <div class="mb-3">
+                        <label for="machine-code" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="machine-code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="machine-name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="machine-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="machine-description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="machine-description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="machine-phase" class="form-label">Fase</label>
+                        <select class="form-select" id="machine-phase" required>
+                            <option value="">Selecione uma fase...</option>
+                            <!-- Preenchido via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="machine-status" class="form-label">Status</label>
+                        <select class="form-select" id="machine-status">
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                            <option value="manutencao">Em Manutenção</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-machine-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editar Máquina -->
+<div class="modal fade" id="editMachineModal" tabindex="-1" aria-labelledby="editMachineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMachineModalLabel">Editar Máquina</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editMachineForm">
+                    <input type="hidden" id="edit-machine-id">
+                    <div class="mb-3">
+                        <label for="edit-machine-code" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="edit-machine-code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-machine-name" class="form-label">Nome</label>
+                        <input type="text" class="form-control" id="edit-machine-name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-machine-description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="edit-machine-description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-machine-phase" class="form-label">Fase</label>
+                        <select class="form-select" id="edit-machine-phase" required>
+                            <option value="">Selecione uma fase...</option>
+                            <!-- Preenchido via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-machine-status" class="form-label">Status</label>
+                        <select class="form-select" id="edit-machine-status">
+                            <option value="ativo">Ativo</option>
+                            <option value="inativo">Inativo</option>
+                            <option value="manutencao">Em Manutenção</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="update-machine-btn">Atualizar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Visualizar QR Code -->
+<div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="qrCodeModalLabel">QR Code da Máquina</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div id="qrcode-container"></div>
+                <h5 class="mt-3" id="qrcode-machine-name"></h5>
+                <p class="text-muted" id="qrcode-machine-info"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <button type="button" class="btn btn-primary" id="print-qrcode-btn">
+                    <i class="fas fa-print me-1"></i> Imprimir
+                </button>
+                <button type="button" class="btn btn-success" id="download-qrcode-btn">
+                    <i class="fas fa-download me-1"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="{{ url_for('static', path='/js/machines.js') }}"></script>
+{% endblock %}

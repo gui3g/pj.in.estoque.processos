@@ -40,7 +40,26 @@
 
 {% block content %}
 <div class="row mb-4">
-    <div class="col-md-12">
+    <!-- Seção de próximos passos -->
+    <div class="col-md-4 mb-4 mb-md-0">
+        <div class="card h-100">
+            <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-tasks me-2"></i>Próximos Passos</h5>
+            </div>
+            <div class="card-body">
+                <div id="next-steps-container" style="display: none;">
+                    <!-- Será preenchido via JavaScript -->
+                </div>
+                <div id="no-lote-selected" class="text-center py-4">
+                    <i class="fas fa-arrow-right fa-2x mb-3 text-muted"></i>
+                    <p class="text-muted">Selecione ou escaneie um lote para ver os próximos passos</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Seção de seleção de lote -->
+    <div class="col-md-8">
         <div class="card">
             <div class="card-header">
                 <h5><i class="fas fa-barcode me-2"></i>Escanear QR Code ou Selecionar Lote</h5>
@@ -197,5 +216,6 @@
 
 {% block extra_js %}
 <script src="https://unpkg.com/html5-qrcode@2.2.1/html5-qrcode.min.js"></script>
+<script src="{{ url_for('static', path='/js/next_steps.js') }}"></script>
 <script src="{{ url_for('static', path='/js/operator.js') }}"></script>
 {% endblock %}

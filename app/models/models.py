@@ -48,6 +48,7 @@ class Fase(Base):
     lotes = relationship("FaseLote", back_populates="fase")
     apontamentos = relationship("Apontamento", back_populates="fase")
     checklist_items = relationship("ChecklistItem", back_populates="fase")
+    maquinas = relationship("Maquina", back_populates="fase")
 
 
 class ProdutoFase(Base):

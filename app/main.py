@@ -9,7 +9,16 @@ from app.core.config import settings
 from app.core.database import engine, get_db
 from app.core.security import get_current_user
 from app.models import models
-from app.routes import auth, products, phases, batches, operators, appointments, admin, checklists, machines
+import app.routes.auth as auth
+import app.routes.admin as admin
+import app.routes.products as products
+import app.routes.phases as phases
+import app.routes.batches as batches
+import app.routes.operators as operators
+import app.routes.appointments as appointments
+import app.routes.checklists as checklists
+import app.routes.machines as machines
+import app.routes.next_step as next_step
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -37,6 +46,7 @@ app.include_router(appointments.router, prefix="/api", tags=["Apontamentos"])
 app.include_router(admin.router, prefix="/api", tags=["Administração"])
 app.include_router(checklists.router, prefix="/api/checklists", tags=["Checklists"])
 app.include_router(machines.router, prefix="/api/machines", tags=["Máquinas"])
+app.include_router(next_step.router, prefix="/api", tags=["Próximos Passos"])
 
 # Configuração dos arquivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -108,6 +118,16 @@ async def admin_users_page(request: Request, current_user=Depends(get_current_us
             detail="Acesso negado. Apenas administradores podem acessar esta página."
         )
     return templates.TemplateResponse("admin/users.html", {"request": request, "user": current_user})
+
+@app.get("/admin/maquinas", response_class=HTMLResponse)
+async def admin_machines_page(request: Request, current_user=Depends(get_current_user)):
+    """Renderiza a página de gerenciamento de máquinas."""
+    if current_user["role"] != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado. Apenas administradores podem acessar esta página."
+        )
+    return templates.TemplateResponse("admin/machines.html", {"request": request, "user": current_user})
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
