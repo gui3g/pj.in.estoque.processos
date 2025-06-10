@@ -35,8 +35,9 @@ ENV/
 sistema-apontamento.tar
 
 # Database
-*.db
-*.sqlite3
+# Não ignorar arquivos de banco de dados para que sejam incluídos no git
+# *.db
+# *.sqlite3
 
 # Alembic
 migrations/versions/
