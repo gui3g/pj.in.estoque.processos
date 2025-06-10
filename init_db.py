@@ -9,7 +9,8 @@ from datetime import datetime, timedelta
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from app.core.config import settings
-from app.models.models import Base, Usuario, Produto, Fase, ProdutoFase, Lote, ProdutoLote, FaseLote, Operador, Maquina
+from app.models.models import Base, Usuario, Produto, Fase, ProdutoFase, Lote, ProdutoLote, FaseLote, Operador
+from app.models.maquina import Maquina
 
 # Configuração para hash de senha
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,8 +23,7 @@ def init_db():
     # Criar engine e conectar ao banco de dados
     engine = create_engine(settings.DATABASE_URL)
     
-    # Criar todas as tabelas
-    Base.metadata.drop_all(bind=engine)
+    # Criar tabelas que não existem (sem excluir as existentes)
     Base.metadata.create_all(bind=engine)
     
     # Criar uma sessão
