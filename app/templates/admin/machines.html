@@ -71,6 +71,25 @@
             </button>
         </div>
         <div class="card-body">
+            <ul class="nav nav-tabs mb-3" id="machinesTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="machines-list-tab" data-bs-toggle="tab" 
+                        data-bs-target="#machines-list" type="button" role="tab" 
+                        aria-controls="machines-list" aria-selected="true">
+                        <i class="fas fa-list me-1"></i>Lista de Máquinas
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="machines-phases-tab" data-bs-toggle="tab" 
+                        data-bs-target="#machines-phases" type="button" role="tab" 
+                        aria-controls="machines-phases" aria-selected="false">
+                        <i class="fas fa-project-diagram me-1"></i>Máquinas por Fase
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="machinesTabsContent">            
+                <div class="tab-pane fade show active" id="machines-list" role="tabpanel" aria-labelledby="machines-list-tab">
             <div class="mb-3">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -97,6 +116,20 @@
             
             <div id="no-machines-message" class="text-center p-3" style="display: none;">
                 <p class="text-muted">Nenhuma máquina cadastrada.</p>
+            </div>
+                </div>
+                
+                <!-- Tab Máquinas por Fase -->
+                <div class="tab-pane fade" id="machines-phases" role="tabpanel" aria-labelledby="machines-phases-tab">
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Arraste as máquinas para reorganizá-las dentro de cada fase. A ordem define a sequência de produção.
+                    </div>
+                    
+                    <div id="phase-machines-container" class="mb-3">
+                        <!-- Preenchido via JavaScript -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -197,26 +230,79 @@
     </div>
 </div>
 
+<!-- Modal Associar Máquina a Fase -->
+<div class="modal fade" id="associateMachineModal" tabindex="-1" aria-labelledby="associateMachineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="associateMachineModalLabel">Associar Máquina a Fase</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="associateMachineForm">
+                    <div class="mb-3">
+                        <label for="associate-machine-phase" class="form-label">Fase</label>
+                        <select class="form-select" id="associate-machine-phase" required>
+                            <option value="">Selecione uma fase...</option>
+                            <!-- Preenchido via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="associate-machine-id" class="form-label">Máquina</label>
+                        <select class="form-select" id="associate-machine-id" required>
+                            <option value="">Selecione uma máquina...</option>
+                            <!-- Preenchido via JavaScript -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="associate-machine-ordem" class="form-label">Ordem na Fase</label>
+                        <input type="number" class="form-control" id="associate-machine-ordem" min="1" value="1">
+                        <div class="form-text">A ordem define a sequência em que as máquinas são utilizadas na fase.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="associate-machine-btn" onclick="associateMachineToPhase()">Associar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Visualizar QR Code -->
 <div class="modal fade" id="qrCodeModal" tabindex="-1" aria-labelledby="qrCodeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="qrCodeModalLabel">QR Code da Máquina</h5>
+                <h5 class="modal-title" id="qrCodeModalLabel">QR Code</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <div id="qrcode-container"></div>
-                <h5 class="mt-3" id="qrcode-machine-name"></h5>
-                <p class="text-muted" id="qrcode-machine-info"></p>
+                <h4 id="qrcode-machine-name" class="mb-2"></h4>
+                <p id="qrcode-machine-info" class="text-muted mb-3"></p>
+                
+                <!-- QR code gerado pelo servidor -->
+                <div id="server-qrcode-container" class="d-flex justify-content-center mb-3">
+                    <img id="qrcode-img" src="" alt="QR Code" style="max-width: 256px; max-height: 256px;">
+                </div>
+                
+                <!-- QR code gerado localmente (fallback) -->
+                <div id="qrcode-container" class="d-flex justify-content-center mb-3"></div>
+                
+                <div class="alert alert-info">
+                    <small>
+                        <i class="fas fa-info-circle me-1"></i>
+                        Escaneie este QR code para identificar a máquina durante o apontamento de produção.
+                    </small>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button type="button" class="btn btn-primary" id="print-qrcode-btn">
-                    <i class="fas fa-print me-1"></i> Imprimir
-                </button>
                 <button type="button" class="btn btn-success" id="download-qrcode-btn">
                     <i class="fas fa-download me-1"></i> Download
+                </button>
+                <button type="button" class="btn btn-primary" id="print-qrcode-btn">
+                    <i class="fas fa-print me-1"></i> Imprimir
                 </button>
             </div>
         </div>

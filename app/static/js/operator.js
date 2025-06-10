@@ -64,7 +64,16 @@ function onScanSuccess(decodedText) {
         $('#start-scanner').text('Iniciar Scanner').prop('disabled', false);
     }
     
-    // Processar o texto do QR Code
+    // Verificar se é um QR code de máquina
+    if (decodedText.startsWith('maquina:')) {
+        // Se estamos no modo de escaneamento de máquina
+        if ($('#machine-qr-reader').is(':visible')) {
+            handleMachineQrCode(decodedText);
+            return;
+        }
+    }
+    
+    // Processar o texto do QR Code de lote
     // Formato esperado: LOTE-{id}|PRODUTO-{id}|FASE-{id}
     try {
         const parts = decodedText.split('|');
@@ -440,23 +449,38 @@ function iniciarApontamento() {
     const produtoId = $('#produto-select').val();
     const faseId = $('#fase-select').val();
     const observacoes = $('#observacoes').val();
+    const maquinaId = $('#apontamento-form').data('maquina-id');
     
     if (!loteId || !produtoId || !faseId) {
         alert('Selecione lote, produto e fase para iniciar o apontamento.');
         return;
     }
     
+    // Verificar se foi selecionada uma máquina quando o checkbox está marcado
+    if ($('#iniciar-apontamento').is(':checked') && !maquinaId) {
+        alert('Escaneie ou selecione uma máquina para iniciar o apontamento.');
+        return;
+    }
+    
+    // Preparar dados do apontamento
+    const apontamentoData = {
+        lote_id: parseInt(loteId),
+        produto_id: parseInt(produtoId),
+        fase_id: parseInt(faseId),
+        observacoes: observacoes,
+        status: 'iniciado'
+    };
+    
+    // Adicionar ID da máquina se estiver disponível
+    if (maquinaId) {
+        apontamentoData.maquina_id = parseInt(maquinaId);
+    }
+    
     $.ajax({
         url: '/api/appointments/',
         type: 'POST',
         contentType: 'application/json',
-        data: JSON.stringify({
-            lote_id: parseInt(loteId),
-            produto_id: parseInt(produtoId),
-            fase_id: parseInt(faseId),
-            observacoes: observacoes,
-            status: 'iniciado'
-        }),
+        data: JSON.stringify(apontamentoData),
         success: function(apontamento) {
             alert('Apontamento iniciado com sucesso!');
             apontamentoAtual = apontamento;
@@ -559,6 +583,64 @@ function updateTimer() {
     $('#tempo-decorrido').text(
         `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
     );
+}
+
+/**
+ * Processa um QR code de máquina
+ * @param {string} qrCode - Código QR escaneado no formato 'maquina:codigo'
+ */
+function handleMachineQrCode(qrCode) {
+    // Extrai o código da máquina do QR code
+    const machineCode = qrCode.replace('maquina:', '');
+    
+    // Buscar detalhes da máquina pelo código
+    $.ajax({
+        url: `/api/machines/by-code/${machineCode}`,
+        type: 'GET',
+        success: function(machine) {
+            // Selecionar a máquina na interface
+            if (machine && machine.id) {
+                // Armazenar o ID da máquina no formulário
+                $('#apontamento-form').data('maquina-id', machine.id);
+                
+                // Atualizar a UI para mostrar a máquina selecionada
+                $('#selected-machine-name').text(machine.nome);
+                $('#machine-selection-container').addClass('machine-selected');
+                $('#scan-machine-btn').html('<i class="fas fa-check-circle"></i> Máquina Selecionada');
+                
+                // Mostrar mensagem de sucesso
+                showAlert('success', `Máquina "${machine.nome}" selecionada com sucesso!`);
+                
+                // Ocultar o leitor de QR após seleção bem-sucedida
+                $('#machine-qr-reader').hide();
+                $('#machine-selector-container').show();
+            } else {
+                showAlert('danger', 'Máquina não encontrada com este código.');
+            }
+        },
+        error: function() {
+            showAlert('danger', 'Erro ao buscar máquina. Verifique se o QR code é válido.');
+        }
+    });
+}
+
+/**
+ * Exibe um alerta na interface do usuário
+ * @param {string} type - Tipo de alerta (success, danger, warning, info)
+ * @param {string} message - Mensagem a ser exibida
+ */
+function showAlert(type, message) {
+    const alertDiv = $(`<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>`);
+    
+    $('#alerts-container').append(alertDiv);
+    
+    // Auto-fechar após 5 segundos
+    setTimeout(() => {
+        alertDiv.alert('close');
+    }, 5000);
 }
 
 /**

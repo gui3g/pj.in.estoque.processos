@@ -18,7 +18,7 @@ import app.routes.operators as operators
 import app.routes.appointments as appointments
 import app.routes.checklists as checklists
 import app.routes.machines as machines
-import app.routes.next_step as next_step
+import app.routes.next_steps as next_steps
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -46,7 +46,7 @@ app.include_router(appointments.router, prefix="/api", tags=["Apontamentos"])
 app.include_router(admin.router, prefix="/api", tags=["Administração"])
 app.include_router(checklists.router, prefix="/api/checklists", tags=["Checklists"])
 app.include_router(machines.router, prefix="/api/machines", tags=["Máquinas"])
-app.include_router(next_step.router, prefix="/api", tags=["Próximos Passos"])
+app.include_router(next_steps.router, prefix="/api/next-steps", tags=["Próximos Passos"])
 
 # Configuração dos arquivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

@@ -39,17 +39,39 @@
 {% endblock %}
 
 {% block content %}
+<!-- Container para alertas -->
+<div id="alerts-container" class="mb-3"></div>
+
 <div class="row mb-4">
-    <!-- Seção de próximos passos -->
+    <!-- Seção de próximos passos e máquinas -->
     <div class="col-md-4 mb-4 mb-md-0">
         <div class="card h-100">
             <div class="card-header bg-info text-white">
-                <h5><i class="fas fa-tasks me-2"></i>Próximos Passos</h5>
+                <h5><i class="fas fa-tasks me-2"></i>Fase Atual e Próximos Passos</h5>
             </div>
             <div class="card-body">
-                <div id="next-steps-container" style="display: none;">
-                    <!-- Será preenchido via JavaScript -->
+                <div id="fase-atual-container" class="mb-3" style="display: none;">
+                    <h6 class="border-bottom pb-2 mb-2">Fase Atual</h6>
+                    <div class="d-flex justify-content-between mb-1">
+                        <strong id="fase-atual-nome">-</strong>
+                        <span class="badge bg-warning" id="fase-atual-dias">0 dia(s)</span>
+                    </div>
+                    
+                    <div class="small mb-2" id="fase-atual-maquinas-container">
+                        <div class="mt-2 mb-1"><strong>Máquinas desta fase:</strong></div>
+                        <div id="fase-atual-maquinas" class="ps-2">
+                            <!-- Preenchido via JavaScript -->
+                        </div>
+                    </div>
                 </div>
+                
+                <div id="next-steps-container" style="display: none;">
+                    <h6 class="border-bottom pb-2 mb-2">Próximos Passos</h6>
+                    <div id="next-steps-list">
+                        <!-- Preenchido via JavaScript -->
+                    </div>
+                </div>
+                
                 <div id="no-lote-selected" class="text-center py-4">
                     <i class="fas fa-arrow-right fa-2x mb-3 text-muted"></i>
                     <p class="text-muted">Selecione ou escaneie um lote para ver os próximos passos</p>
@@ -130,6 +152,12 @@
                                 <div class="info-value" id="fase-info">-</div>
                             </div>
                         </div>
+                        <div class="col-md-4">
+                            <div class="info-box">
+                                <div class="info-label">Máquina:</div>
+                                <div class="info-value" id="maquina-info">-</div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="row mb-3">
@@ -155,10 +183,20 @@
                     </div>
 
                     <div class="row" id="apontamento-actions">
-                        <div class="col-md-12 text-center">
-                            <button class="btn btn-success btn-lg" id="iniciar-apontamento">
-                                <i class="fas fa-play me-1"></i>Iniciar Fase
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="iniciar-apontamento">
+                            <label class="form-check-label" for="iniciar-apontamento">Iniciar Apontamento</label>
+                        </div>
+                        
+                        <div class="mb-3" id="machine-scan-container" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Escaneie o QR code da máquina que será utilizada para este apontamento
+                            </div>
+                            <button id="scan-machine-qr" class="btn btn-primary mb-2">
+                                <i class="fas fa-qrcode me-1"></i>Escanear QR Code da Máquina
                             </button>
+                            <div id="machine-qr-reader" class="qr-reader-container" style="display: none;"></div>
                         </div>
                     </div>
 

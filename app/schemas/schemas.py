@@ -243,6 +243,7 @@ class ApontamentoBase(BaseModel):
     produto_id: int
     fase_id: int
     operador_id: int
+    maquina_id: Optional[int] = None
     observacoes: Optional[str] = None
     status: str
 

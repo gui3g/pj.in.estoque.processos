@@ -141,12 +141,128 @@ function loadPhases() {
         url: '/api/phases',
         type: 'GET',
         success: function(phases) {
-            const options = phases.map(phase => `<option value="${phase.id}">${phase.descricao}</option>`).join('');
-            $('#machine-phase, #edit-machine-phase').append(options);
+            const options = phases.map(phase => `<option value="${phase.id}">${phase.nome || phase.descricao}</option>`).join('');
+            $('#machine-phase, #edit-machine-phase, #associate-machine-phase').append(options);
+            
+            // Carregar máquinas por fase (para a tab de associação)
+            loadMachinesByPhase();
         },
         error: function() {
             showAlert('Erro ao carregar fases', 'danger');
         }
+    });
+}
+
+/**
+ * Carrega as máquinas agrupadas por fase
+ */
+function loadMachinesByPhase() {
+    $.ajax({
+        url: '/api/machines/fases',
+        type: 'GET',
+        success: function(result) {
+            displayMachinesByPhase(result);
+        },
+        error: function() {
+            showAlert('Erro ao carregar máquinas por fase', 'danger');
+        }
+    });
+}
+
+/**
+ * Exibe as máquinas agrupadas por fase
+ */
+function displayMachinesByPhase(phases) {
+    const container = $('#phase-machines-container');
+    container.empty();
+    
+    if (phases.length === 0) {
+        container.html('<div class="alert alert-info">Nenhuma fase com máquinas associadas.</div>');
+        return;
+    }
+    
+    phases.forEach(function(phase) {
+        const phaseCard = $(`
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>${phase.fase_nome}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Ordem</th>
+                                    <th>Código</th>
+                                    <th>Nome</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="phase-${phase.fase_id}-machines" data-phase-id="${phase.fase_id}" class="sortable-machines">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-end mt-2">
+                        <button class="btn btn-primary btn-sm add-machine-to-phase" data-phase-id="${phase.fase_id}">
+                            <i class="fas fa-plus me-1"></i>Adicionar Máquina
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `);
+        
+        const tbody = phaseCard.find(`#phase-${phase.fase_id}-machines`);
+        
+        if (phase.maquinas && phase.maquinas.length > 0) {
+            phase.maquinas.sort((a, b) => a.ordem - b.ordem).forEach(function(machine) {
+                const statusBadge = getStatusBadge(machine.status);
+                const machineRow = $(`
+                    <tr data-machine-id="${machine.id}" data-order="${machine.ordem}">
+                        <td><span class="ordem-badge badge bg-secondary">${machine.ordem}</span></td>
+                        <td>${machine.codigo}</td>
+                        <td>${machine.nome}</td>
+                        <td>${statusBadge}</td>
+                        <td>
+                            <button class="btn btn-sm btn-danger remove-machine-btn" data-phase-id="${phase.fase_id}" data-machine-id="${machine.id}" title="Remover da fase">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+                tbody.append(machineRow);
+            });
+        } else {
+            tbody.append(`<tr><td colspan="5"><em>Nenhuma máquina associada</em></td></tr>`);
+        }
+        
+        container.append(phaseCard);
+    });
+    
+    // Permitir ordenação das máquinas dentro da fase via drag and drop
+    $('.sortable-machines').each(function() {
+        const phaseId = $(this).data('phase-id');
+        
+        $(this).sortable({
+            items: 'tr:not(:last)',
+            cursor: 'move',
+            axis: 'y',
+            update: function() {
+                updateMachineOrder(phaseId);
+            }
+        });
+    });
+    
+    // Adicionar handlers para botões
+    $('.add-machine-to-phase').on('click', function() {
+        const phaseId = $(this).data('phase-id');
+        showAddMachineToPhaseModal(phaseId);
+    });
+    
+    $('.remove-machine-btn').on('click', function() {
+        const phaseId = $(this).data('phase-id');
+        const machineId = $(this).data('machine-id');
+        removeMachineFromPhase(phaseId, machineId);
     });
 }
 
@@ -286,33 +402,177 @@ function showQRCode(machineId) {
         type: 'GET',
         success: function(machine) {
             $('#qrcode-machine-name').text(machine.nome);
-            $('#qrcode-machine-info').text(`Código: ${machine.codigo} | Fase: ${machine.fase_descricao}`);
+            $('#qrcode-machine-info').text(`Código: ${machine.codigo}`);
             
-            // Limpar container anterior
-            $('#qrcode-container').empty();
-            
-            // Criar QR Code com os dados da máquina
-            const qrData = JSON.stringify({
-                id: machine.id,
-                codigo: machine.codigo,
-                nome: machine.nome,
-                fase_id: machine.fase_id
-            });
-            
-            const qrcode = new QRCode(document.getElementById("qrcode-container"), {
-                text: qrData,
-                width: 256,
-                height: 256,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.H
-            });
+            // Buscar imagem de QR Code gerada pelo servidor
+            if (machine.qrcode) {
+                // Se a máquina já tem um QR code no servidor, exibir ele
+                const qrUrl = `/api/machines/qrcode/${machine.id}`;
+                $('#qrcode-img').attr('src', qrUrl);
+                $('#qrcode-container').hide();
+                $('#server-qrcode-container').show();
+            } else {
+                // Caso contrário, gerar um QR code local temporariamente
+                $('#server-qrcode-container').hide();
+                $('#qrcode-container').show();
+                
+                // Limpar container anterior
+                $('#qrcode-container').empty();
+                
+                // Criar QR Code com os dados da máquina
+                const qrData = `maquina:${machine.codigo}:${machine.nome}`;
+                
+                const qrcode = new QRCode(document.getElementById("qrcode-container"), {
+                    text: qrData,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            }
             
             // Exibir o modal
             $('#qrCodeModal').modal('show');
         },
         error: function() {
             showAlert('Erro ao carregar dados da máquina', 'danger');
+        }
+    });
+}
+
+/**
+ * Exibe o modal para adicionar uma máquina a uma fase
+ */
+function showAddMachineToPhaseModal(phaseId) {
+    // Limpar seleção anterior
+    $('#associate-machine-phase').val(phaseId);
+    $('#associate-machine-id').val('');
+    $('#associate-machine-ordem').val(1);
+    
+    // Carregar máquinas para seleção
+    $.ajax({
+        url: '/api/machines',
+        type: 'GET',
+        data: { active_only: true },
+        success: function(machines) {
+            const machineSelect = $('#associate-machine-id');
+            machineSelect.empty();
+            machineSelect.append('<option value="">Selecione uma máquina...</option>');
+            
+            machines.forEach(function(machine) {
+                machineSelect.append(`<option value="${machine.id}">${machine.nome} (${machine.codigo})</option>`);
+            });
+            
+            $('#associateMachineModal').modal('show');
+        },
+        error: function() {
+            showAlert('Erro ao carregar máquinas disponíveis', 'danger');
+        }
+    });
+}
+
+/**
+ * Associa uma máquina a uma fase com uma ordem específica
+ */
+function associateMachineToPhase() {
+    const phaseId = $('#associate-machine-phase').val();
+    const machineId = $('#associate-machine-id').val();
+    const ordem = $('#associate-machine-ordem').val() || 1;
+    
+    if (!phaseId || !machineId) {
+        showAlert('Selecione uma fase e uma máquina', 'warning');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/machines/associar-fase',
+        type: 'POST',
+        data: {
+            fase_id: phaseId,
+            maquina_id: machineId,
+            ordem: ordem
+        },
+        success: function(response) {
+            $('#associateMachineModal').modal('hide');
+            showAlert('Máquina associada com sucesso', 'success');
+            loadMachinesByPhase();
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.detail || 'Erro ao associar máquina à fase';
+            showAlert(message, 'danger');
+        }
+    });
+}
+
+/**
+ * Remove a associação de uma máquina com uma fase
+ */
+function removeMachineFromPhase(phaseId, machineId) {
+    if (!confirm('Tem certeza que deseja remover esta máquina da fase?')) {
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/machines/desassociar-fase',
+        type: 'DELETE',
+        data: {
+            fase_id: phaseId,
+            maquina_id: machineId
+        },
+        success: function(response) {
+            showAlert('Máquina removida da fase com sucesso', 'success');
+            loadMachinesByPhase();
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.detail || 'Erro ao remover máquina da fase';
+            showAlert(message, 'danger');
+        }
+    });
+}
+
+/**
+ * Atualiza a ordem das máquinas em uma fase
+ */
+function updateMachineOrder(phaseId) {
+    const tbody = $(`#phase-${phaseId}-machines`);
+    const rows = tbody.find('tr[data-machine-id]');
+    
+    if (rows.length === 0) return;
+    
+    // Construir array com nova ordem
+    const novaOrdem = [];
+    rows.each(function(index) {
+        const machineId = $(this).data('machine-id');
+        if (machineId) {
+            const ordem = index + 1;
+            novaOrdem.push({
+                maquina_id: machineId,
+                ordem: ordem
+            });
+            
+            // Atualizar exibição da ordem
+            $(this).data('order', ordem);
+            $(this).find('.ordem-badge').text(ordem);
+        }
+    });
+    
+    // Enviar nova ordem para o servidor
+    $.ajax({
+        url: '/api/machines/reordenar',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            fase_id: phaseId,
+            nova_ordem: novaOrdem
+        }),
+        success: function(response) {
+            showAlert('Ordem das máquinas atualizada', 'success');
+        },
+        error: function(xhr) {
+            const message = xhr.responseJSON?.detail || 'Erro ao atualizar ordem das máquinas';
+            showAlert(message, 'danger');
+            loadMachinesByPhase();  // Recarregar para exibir ordem correta
         }
     });
 }

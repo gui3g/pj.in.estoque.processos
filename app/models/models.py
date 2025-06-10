@@ -48,7 +48,7 @@ class Fase(Base):
     lotes = relationship("FaseLote", back_populates="fase")
     apontamentos = relationship("Apontamento", back_populates="fase")
     checklist_items = relationship("ChecklistItem", back_populates="fase")
-    maquinas = relationship("Maquina", back_populates="fase")
+    maquinas_associacao = relationship("FaseMaquina", back_populates="fase", cascade="all, delete-orphan")
 
 
 class ProdutoFase(Base):
@@ -136,6 +136,7 @@ class Apontamento(Base):
     produto_id = Column(Integer, ForeignKey("produtos.id"))
     fase_id = Column(Integer, ForeignKey("fases.id"))
     operador_id = Column(Integer, ForeignKey("usuarios.id"))
+    maquina_id = Column(Integer, ForeignKey("maquinas.id"), nullable=True)
     data_inicio = Column(DateTime, default=datetime.utcnow)
     data_fim = Column(DateTime, nullable=True)
     tempo_real = Column(Integer, nullable=True)  # em minutos, calculado
@@ -147,6 +148,7 @@ class Apontamento(Base):
     produto = relationship("Produto", back_populates="apontamentos")
     fase = relationship("Fase", back_populates="apontamentos")
     operador = relationship("Usuario", back_populates="apontamentos")
+    maquina = relationship("Maquina", back_populates="apontamentos")
     checklist_respostas = relationship("ChecklistResposta", back_populates="apontamento")
 
 
