@@ -19,13 +19,13 @@
                     <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active" href="/admin/produtos">
-                        <i class="fas fa-boxes me-1"></i>Produtos
+                    <a class="nav-link" href="/admin/fases">
+                        <i class="fas fa-tasks me-1"></i>Fases
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/admin/fases">
-                        <i class="fas fa-tasks me-1"></i>Fases
+                    <a class="nav-link active" href="/admin/produtos">
+                        <i class="fas fa-boxes me-1"></i>Produtos
                     </a>
                 </li>
                 <li class="nav-item">
@@ -138,6 +138,25 @@
                         </div>
                         <small class="form-text text-muted">O tempo será convertido para minutos no sistema</small>
                     </div>
+                    <div class="mb-3">
+                        <label for="product-fases" class="form-label">Fases do Produto</label>
+                        <div class="d-flex align-items-center mb-2">
+                            <select class="form-select me-2" id="phase-select">
+                                <option value="" selected disabled>Selecione uma fase...</option>
+                                <!-- Fases serão carregadas via JavaScript -->
+                            </select>
+                            <button type="button" class="btn btn-sm btn-primary" id="add-phase">Adicionar</button>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">Fases Selecionadas</div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush" id="selected-phases">
+                                    <li class="list-group-item text-center text-muted" id="no-phases-selected">Nenhuma fase selecionada</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Arraste as fases para reordenar</small>
+                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -169,5 +188,6 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="{{ url_for('static', path='/js/products.js') }}"></script>
 {% endblock %}

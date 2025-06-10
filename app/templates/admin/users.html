@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Gerenciamento de Usuários{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para a página de usuários */
+    .password-row {
+        transition: opacity 0.3s ease;
+    }
+    .show-password-label {
+        user-select: none;
+    }
+</style>
+{% endblock %}
+
+{% block header %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/admin">Sistema de Apontamento</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin"><i class="fas fa-tachometer-alt me-1"></i>Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/fases">
+                        <i class="fas fa-tasks me-1"></i>Fases
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/produtos">
+                        <i class="fas fa-boxes me-1"></i>Produtos
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin/lotes">
+                        <i class="fas fa-pallet me-1"></i>Lotes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/admin/usuarios">
+                        <i class="fas fa-users me-1"></i>Usuários
+                    </a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                       data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fa fa-user me-2"></i>{{ user.name }}
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#" id="logout-btn">Sair</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Gerenciamento de Usuários</h5>
+            <div>
+                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#userModal">
+                    <i class="fas fa-plus-circle me-1"></i> Novo Usuário
+                </button>
+                <button class="btn btn-sm btn-outline-secondary" id="refresh-users">
+                    <i class="fas fa-sync-alt me-1"></i> Atualizar Lista
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="input-group mb-3">
+                <span class="input-group-text" id="search-icon"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder="Buscar usuários..." id="search-users" aria-describedby="search-icon">
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Usuário</th>
+                            <th>Email</th>
+                            <th>Perfil</th>
+                            <th>Grupo</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Os dados dos usuários serão carregados via JavaScript -->
+                        <tr>
+                            <td colspan="7" class="text-center">Carregando usuários...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Usuário -->
+<div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Novo Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="user-form">
+                    <div class="mb-3">
+                        <label for="user-nome" class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="user-nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-usuario" class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" id="user-usuario" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="user-email" required>
+                    </div>
+                    <div class="mb-3 password-row">
+                        <label for="user-senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="user-senha" required>
+                    </div>
+                    <div class="mb-3 form-check password-row">
+                        <input type="checkbox" class="form-check-input" id="show-password">
+                        <label class="form-check-label show-password-label" for="show-password">Mostrar senha</label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-role" class="form-label">Perfil</label>
+                        <select class="form-select" id="user-role" required>
+                            <option value="" selected disabled>Selecione um perfil</option>
+                            <option value="admin">Administrador</option>
+                            <option value="operator">Operador</option>
+                            <option value="viewer">Visualizador</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-grupo" class="form-label">Grupo (opcional)</label>
+                        <input type="text" class="form-control" id="user-grupo">
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="user-ativo" checked>
+                        <label class="form-check-label" for="user-ativo">
+                            Usuário Ativo
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="save-user">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Visualização de Usuário -->
+<div class="modal fade" id="viewUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalhes do Usuário</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="user-details-content">
+                <!-- Conteúdo será preenchido dinamicamente -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+<script src="{{ url_for('static', path='/js/users.js') }}"></script>
+{% endblock %}
